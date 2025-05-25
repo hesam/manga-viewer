@@ -1,3 +1,3 @@
-# code-journal
+# manga-viewer
 
-An HTML, CSS, and TypeScript journal app.
+Testing a new viewer for manga/comics.

@@ -1,0 +1,19 @@
+body {
+  color: black;
+  background-color: black;
+  font-family: 'Open Sans', sans-serif;
+  margin: 0;
+}
+
+.page {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.box {
+  height: 100vh;
+}

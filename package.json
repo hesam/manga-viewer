@@ -1,8 +1,8 @@
 {
-  "name": "code-journal",
+  "name": "manga-viewer",
   "version": "1.0.0",
   "private": true,
-  "description": "A dynamic journal application for coders.",
+  "description": "Testing a new viewer for manga/comics.",
   "scripts": {
     "prepare": "husky install"
   },
