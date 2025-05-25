@@ -1,31 +1,54 @@
 'use strict';
 const numImages = 10;
+const boxFadeDelay = 500;
+// Adjust delay to match typical double-click speed:
+const singleClickDelay = 250;
 const $boxImage = document.querySelector('.box');
-let currentIndex = 0;
+if (!$boxImage) throw new Error('Image not found!');
+let currentIndex = 1;
+let singleClickTimeout = null;
 function showIndex(targetIndex) {
-  if (!$boxImage) throw new Error('Image not found!');
+  console.log(targetIndex);
   currentIndex = targetIndex;
-  $boxImage.setAttribute('src', `images/${currentIndex}.png`);
+  $boxImage?.classList.add('faded-out');
+  setTimeout(() => {
+    $boxImage.setAttribute('src', `images/${currentIndex}.png`);
+    $boxImage?.classList.remove('faded-out');
+  }, boxFadeDelay);
 }
 function getNextIndex() {
-  if (currentIndex === numImages - 1) {
-    return 0;
+  if (currentIndex === numImages) {
+    return 1;
   } else {
     return currentIndex + 1;
   }
 }
-/*
-function getPreviousIndex(): number {
-  if (currentIndex === 0) {
-    return numImages - 1;
+function getPrevIndex() {
+  if (currentIndex === 1) {
+    return numImages;
   } else {
     return currentIndex - 1;
   }
 }
-  */
 function handleClick() {
-  showIndex(getNextIndex());
+  // Delay the click handler slightly to ignore if it's a double-click:
+  // If there's already a timer, let it continue:
+  if (singleClickTimeout) return;
+  singleClickTimeout = setTimeout(() => {
+    showIndex(getNextIndex());
+    singleClickTimeout = null;
+  }, singleClickDelay);
+}
+function handleDblClick() {
+  singleClickTimeout && clearTimeout(singleClickTimeout); // Prevent single click from firing
+  showIndex(getPrevIndex());
+  singleClickTimeout = null;
+}
+function handleOnLoad() {
+  showIndex(currentIndex);
 }
 const $page = document.querySelector('.page');
 if (!$page) throw new Error('$page is null');
+$page.addEventListener('dblclick', handleDblClick);
 $page.addEventListener('click', handleClick);
+document.addEventListener('DOMContentLoaded', handleOnLoad);
