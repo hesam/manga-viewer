@@ -1,0 +1,14 @@
+{
+  "extends": "./node_modules/@learningfuze/lfz-config/config/eslintrc.json",
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "all",
+        "ignoreRestSiblings": true,
+        "varsIgnorePattern": "^(data|readData|writeData)$"
+      }
+    ]
+  }
+}
