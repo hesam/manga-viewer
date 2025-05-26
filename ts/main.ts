@@ -7,6 +7,7 @@ const scaleMin = 1;
 const boxFadeDelay = 350; // Fade animation duration
 const singleClickDelay = 250; // adjust delay to match typical double-click speed:
 const imagesetLabel = Math.random() > 0.5 ? 'a' : 'b';
+const audiosetLabel = Math.random() > 0.5 ? '1' : '2';
 
 let currIndex = 1;
 let $boxImage: HTMLElement | null = null;
@@ -16,6 +17,7 @@ let currFadeStep = 0;
 let opacity = opacityMin;
 let scale = scaleMax;
 let fadeAnimationBusy = false;
+let firstClick = true;
 
 function showIndex(targetIndex: number): void {
   console.log(targetIndex);
@@ -88,6 +90,16 @@ function handleClick(): void {
   // Delay the click handler slightly to ignore if it's a double-click:
   // If there's already a timer, let it continue:
   if (fadeAnimationBusy || singleClickTimeout) return;
+  // Select bg audio randomly and play:
+  if (firstClick) {
+    firstClick = false;
+    const $bgAudio = document.querySelector('#bg-audio') as HTMLAudioElement;
+    if ($bgAudio) {
+      $bgAudio.setAttribute('src', `audio/${audiosetLabel}.mp3`);
+      $bgAudio.loop = true;
+      $bgAudio.play();
+    }
+  }
   singleClickTimeout = setTimeout(() => {
     fadeAnimationBusy = true;
     showIndex(getNextIndex());
@@ -109,7 +121,9 @@ function handleOnLoad(): void {
   $boxImage.className = 'box faded-out';
   $boxImage.setAttribute('alt', 'box');
   $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex}.png`);
+  $boxImage!.setAttribute('draggable', 'false');
   $page?.appendChild($boxImage);
+
   // Fade image in:
   performFadeIn(true);
 }

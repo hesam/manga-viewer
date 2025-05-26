@@ -13,6 +13,7 @@ body {
   color: black;
   background-color: black;
   font-family: 'Open Sans', sans-serif;
+  user-select: none;
 }
 
 .page {
