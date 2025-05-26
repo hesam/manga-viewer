@@ -71,7 +71,7 @@ function performFadeInOut(
           'src',
           `images/${imagesetLabel}${currIndex}.png`,
         );
-        setTimeout(() => performFadeIn(false), boxFadeDelay / 3);
+        setTimeout(() => performFadeIn(false), boxFadeDelay);
         return;
       } else if (firstTime) $boxImage?.classList.remove('faded-out');
       fadeAnimationBusy = false;
