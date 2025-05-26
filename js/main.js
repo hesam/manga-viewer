@@ -1,29 +1,27 @@
 'use strict';
-const numImages = 10;
-const boxFadeDelay = 350;
-// Adjust delay to match typical double-click speed:
-const singleClickDelay = 250;
-const $boxImage = document.querySelector('.box');
-if (!$boxImage) throw new Error('Image not found!');
-let currIndex = 1;
-let singleClickTimeout = null;
-let fadeStepTimeout = null;
-const numFadeSteps = 25;
-let currFadeStep = 0;
+const numImages = 10; // Num images to scroll thru
+const numFadeSteps = 25; // Fade Animation step count
 const opacityMax = 1;
 const opacityMin = 0;
-let opacity = opacityMin;
 const scaleMax = 1.025;
 const scaleMin = 1;
+const boxFadeDelay = 350; // Fade animation duration
+const singleClickDelay = 250; // adjust delay to match typical double-click speed:
+const imagesetLabel = Math.random() > 0.5 ? 'a' : 'b';
+let currIndex = 1;
+let $boxImage = null;
+let singleClickTimeout = null;
+let fadeStepTimeout = null;
+let currFadeStep = 0;
+let opacity = opacityMin;
 let scale = scaleMax;
-
 function showIndex(targetIndex) {
   console.log(targetIndex);
   currIndex = targetIndex;
   /*
     $boxImage?.classList.add('faded-out');
     setTimeout(() => {
-      $boxImage!.setAttribute('src', `images/${currIndex}.png`);
+      $boxImage!.setAttribute('src', `images/${imagesetLabel}${currIndex}.png`);
       $boxImage?.classList.remove('faded-out');
     }, boxFadeDelay);
     */
@@ -64,28 +62,17 @@ function performFadeInOut(
       $boxImage.style.opacity = String(opacityEnd);
       $boxImage.style.transform = `scale(${scaleEnd})`;
       if (isFadeOut) {
-        $boxImage.setAttribute('src', `images/${currIndex}.png`);
+        $boxImage.setAttribute(
+          'src',
+          `images/${imagesetLabel}${currIndex}.png`,
+        );
         setTimeout(() => performFadeIn(false), boxFadeDelay / 3);
-      } else if (firstTime) {
-        $boxImage?.classList.remove('faded-out');
-      }
+      } else if (firstTime) $boxImage?.classList.remove('faded-out');
     }
   }, boxFadeDelay / numFadeSteps);
 }
-function getNextIndex() {
-  if (currIndex === numImages) {
-    return 1;
-  } else {
-    return currIndex + 1;
-  }
-}
-function getPrevIndex() {
-  if (currIndex === 1) {
-    return numImages;
-  } else {
-    return currIndex - 1;
-  }
-}
+const getNextIndex = () => (currIndex === numImages ? 1 : currIndex + 1);
+const getPrevIndex = () => (currIndex === 1 ? numImages : currIndex - 1);
 function handleClick() {
   // Delay the click handler slightly to ignore if it's a double-click:
   // If there's already a timer, let it continue:
@@ -100,11 +87,21 @@ function handleDblClick() {
   showIndex(getPrevIndex());
   singleClickTimeout = null;
 }
-function handleOnLoad() {  
+function handleOnLoad() {
+  // Create img element for comic:
+  $boxImage = document.createElement('img');
+  $boxImage.className = 'box faded-out';
+  $boxImage.setAttribute('alt', 'box');
+  $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex}.png`);
+  $page?.appendChild($boxImage);
+  // Fade image in:
   performFadeIn(true);
 }
 const $page = document.querySelector('.page');
 if (!$page) throw new Error('$page is null');
+// On dbl-click move to prev image:
 $page.addEventListener('dblclick', handleDblClick);
+// On click move to next image:
 $page.addEventListener('click', handleClick);
+// Fade first image in:
 document.addEventListener('DOMContentLoaded', handleOnLoad);
