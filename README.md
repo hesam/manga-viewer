@@ -7,3 +7,8 @@ A prototype manga/comics viewer
 ## Live Website
 
 Visit [Manga Viewer](https://hesam.github.io/manga-viewer/)
+
+## Navigation
+
+_Click_: Move forward
+_Dbl-Click_: Move backward
