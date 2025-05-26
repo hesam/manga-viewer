@@ -14,10 +14,10 @@ const numFadeSteps = 25;
 let currFadeStep = 0;
 const opacityMax = 1;
 const opacityMin = 0;
-let opacity = opacityMax;
-const scaleMax = 1.05;
+let opacity = opacityMin;
+const scaleMax = 1.025;
 const scaleMin = 1;
-let scale = 1;
+let scale = scaleMax;
 
 function showIndex(targetIndex: number): void {
   console.log(targetIndex);
