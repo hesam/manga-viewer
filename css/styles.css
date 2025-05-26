@@ -18,6 +18,7 @@ body {
   height: 100vh;
 }
 
+/*
 .box.fade-in-out {
   opacity: 1;
   transform: scale(1);
@@ -27,6 +28,12 @@ body {
 }
 
 .box.fade-in-out.faded-out {
+  opacity: 0;
+  transform: scale(1.05);
+}
+  */
+
+.box.faded-out {
   opacity: 0;
   transform: scale(1.05);
 }
