@@ -15,6 +15,7 @@ let fadeStepTimeout = null;
 let currFadeStep = 0;
 let opacity = opacityMin;
 let scale = scaleMax;
+let fadeAnimationBusy = false;
 function showIndex(targetIndex) {
   console.log(targetIndex);
   currIndex = targetIndex;
@@ -25,9 +26,9 @@ function showIndex(targetIndex) {
       $boxImage?.classList.remove('faded-out');
     }, boxFadeDelay);
     */
-  performFadeOut();
+  performFadeOutThenIn();
 }
-function performFadeOut() {
+function performFadeOutThenIn() {
   performFadeInOut(opacityMax, opacityMin, scaleMin, scaleMax, true, false);
 }
 function performFadeIn(firstTime) {
@@ -45,7 +46,7 @@ function performFadeInOut(
   opacityEnd,
   scaleStart,
   scaleEnd,
-  isFadeOut,
+  isFadeOutThenIn,
   firstTime,
 ) {
   fadeStepTimeout = setInterval(() => {
@@ -61,13 +62,15 @@ function performFadeInOut(
       currFadeStep = 0;
       $boxImage.style.opacity = String(opacityEnd);
       $boxImage.style.transform = `scale(${scaleEnd})`;
-      if (isFadeOut) {
+      if (isFadeOutThenIn) {
         $boxImage.setAttribute(
           'src',
           `images/${imagesetLabel}${currIndex}.png`,
         );
         setTimeout(() => performFadeIn(false), boxFadeDelay / 3);
+        return;
       } else if (firstTime) $boxImage?.classList.remove('faded-out');
+      fadeAnimationBusy = false;
     }
   }, boxFadeDelay / numFadeSteps);
 }
@@ -76,13 +79,16 @@ const getPrevIndex = () => (currIndex === 1 ? numImages : currIndex - 1);
 function handleClick() {
   // Delay the click handler slightly to ignore if it's a double-click:
   // If there's already a timer, let it continue:
-  if (singleClickTimeout) return;
+  if (fadeAnimationBusy || singleClickTimeout) return;
   singleClickTimeout = setTimeout(() => {
+    fadeAnimationBusy = true;
     showIndex(getNextIndex());
     singleClickTimeout = null;
   }, singleClickDelay);
 }
 function handleDblClick() {
+  if (fadeAnimationBusy) return;
+  fadeAnimationBusy = true;
   singleClickTimeout && clearTimeout(singleClickTimeout); // Prevent single click from firing
   showIndex(getPrevIndex());
   singleClickTimeout = null;
