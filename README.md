@@ -1,3 +1,7 @@
 # manga-viewer
 
-Testing a new viewer for manga/comics.
+A prototype manga/comics viewer
+
+## Live Website
+
+Visit [Manga Viewer](https://hesam.github.io/manga-viewer/)

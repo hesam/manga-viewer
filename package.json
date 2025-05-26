@@ -2,7 +2,7 @@
   "name": "manga-viewer",
   "version": "1.0.0",
   "private": true,
-  "description": "Testing a new viewer for manga/comics.",
+  "description": "A prototype manga/comics viewer.",
   "scripts": {
     "prepare": "husky install"
   },
