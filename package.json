@@ -1,8 +1,8 @@
 {
-  "name": "manga-viewer",
+  "name": "mangavera",
   "version": "1.0.0",
   "private": true,
-  "description": "A prototype manga/comics viewer.",
+  "description": "MangaVera -- A prototype manga/comics viewer.",
   "scripts": {
     "prepare": "husky install"
   },

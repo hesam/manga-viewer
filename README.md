@@ -1,12 +1,12 @@
-# manga-viewer
+# mangavera
 
-A prototype manga/comics viewer
+MangaVera -- A prototype manga/comics viewer
 
-![Logo](https://hesam.github.io/manga-viewer/images/favicon.png)
+![Logo](https://hesam.github.io/mangavera/images/favicon.png)
 
 ## Live Website
 
-Visit [Manga Viewer](https://hesam.github.io/manga-viewer/)
+Visit [Manga Viewer](https://hesam.github.io/mangavera/)
 
 ## Navigation
 
