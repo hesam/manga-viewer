@@ -1,5 +1,10 @@
 'use strict';
-const numImages = 10; // Num images to scroll thru
+const comicSets = [
+  { setLabel: 'a', numBoxes: 10 },
+  { setLabel: 'b', numBoxes: 10 },
+  { setLabel: 'c', numBoxes: 7 },
+];
+const numAudioSets = 2; // Number of background audio files
 const numFadeSteps = 25; // Fade Animation step count
 const opacityMax = 1;
 const opacityMin = 0;
@@ -7,9 +12,12 @@ const scaleMax = 1.025;
 const scaleMin = 1;
 const boxFadeDelay = 350; // Fade animation duration
 const singleClickDelay = 250; // adjust delay to match typical double-click speed:
-const imagesetLabel = Math.random() > 0.5 ? 'a' : 'b';
-const audiosetLabel = Math.random() > 0.5 ? '1' : '2';
-let currIndex = 1;
+const numComicSets = comicSets.length;
+const randomComic = comicSets[Math.floor(Math.random() * numComicSets)];
+const numBoxes = randomComic.numBoxes;
+const imagesetLabel = randomComic.setLabel;
+const audiosetLabel = 1 + Math.floor(Math.random() * numAudioSets);
+let currIndex = 0;
 let $boxImage = null;
 let singleClickTimeout = null;
 let fadeStepTimeout = null;
@@ -67,7 +75,7 @@ function performFadeInOut(
       if (isFadeOutThenIn) {
         $boxImage.setAttribute(
           'src',
-          `images/${imagesetLabel}${currIndex}.png`,
+          `images/${imagesetLabel}${currIndex + 1}.png`,
         );
         setTimeout(() => performFadeIn(false), boxFadeDelay);
         return;
@@ -76,8 +84,8 @@ function performFadeInOut(
     }
   }, boxFadeDelay / numFadeSteps);
 }
-const getNextIndex = () => (currIndex === numImages ? 1 : currIndex + 1);
-const getPrevIndex = () => (currIndex === 1 ? numImages : currIndex - 1);
+const getNextIndex = () => (currIndex === numBoxes - 1 ? 1 : currIndex + 1);
+const getPrevIndex = () => (currIndex === 0 ? numBoxes - 1 : currIndex - 1);
 function handleClick() {
   // Delay the click handler slightly to ignore if it's a double-click:
   // If there's already a timer, let it continue:
@@ -110,7 +118,7 @@ function handleOnLoad() {
   $boxImage = document.createElement('img');
   $boxImage.className = 'box faded-out';
   $boxImage.setAttribute('alt', 'box');
-  $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex}.png`);
+  $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex + 1}.png`);
   $boxImage.setAttribute('draggable', 'false');
   $page?.appendChild($boxImage);
   // Fade image in:
