@@ -1,23 +1,36 @@
 interface ComicSet {
   setLabel: string; // Image file names prefix
   numBoxes: number; // Num boxes (images) to scroll thru
-  boxZoomLevels: number[]; // Defines zoom scale level for each box
+  boxWHRatios: number[]; // Defines width/height ratio (& zoom scale level) for each box
 }
 
 const comicSets: ComicSet[] = [
-  { setLabel: 'a', numBoxes: 10, boxZoomLevels: new Array(10).fill(1) },
-  { setLabel: 'b', numBoxes: 10, boxZoomLevels: new Array(10).fill(1) },
-  { setLabel: 'c', numBoxes: 7, boxZoomLevels: [1.5, 1, 1, 1, 1, 1, 1] },
+  {
+    setLabel: 'a',
+    numBoxes: 10,
+    boxWHRatios: [1, 1, 1 / 3, 1, 2, 1, 1, 1 / 3, 1, 1],
+  },
+  {
+    setLabel: 'b',
+    numBoxes: 10,
+    boxWHRatios: [1, 4, 10 / 35, 1, 1, 1, 1, 1, 1, 1],
+  },
+  { setLabel: 'c', numBoxes: 7, boxWHRatios: [2 / 3, 1, 1, 1, 1, 1, 1] },
 ];
+
+const widthToHeightRatioZoomScale = (whRatio: number): number =>
+  Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
 
 const numAudioSets = 2; // Number of background audio files
 const numFadeSteps = 25; // Fade animation step count
 const numSwipeThruSteps = 100; // Swipe thru box Animation step count
+const scaleMax = 1.025; // Bit of over-scaling for fade in effect
 const opacityMax = 1;
 const opacityMin = 0;
 const boxFadeDelay = 350; // Fade animation duration
 const boxSwipeThruDelay = 50; // Fade animation duration
 const singleClickDelay = 250; // adjust delay to match typical double-click speed:
+const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
 
 const numComicSets = comicSets.length;
@@ -25,7 +38,7 @@ const randomComic = comicSets[Math.floor(Math.random() * numComicSets)];
 
 const numBoxes = randomComic.numBoxes;
 const imagesetLabel = randomComic.setLabel;
-const boxZoomLevels = randomComic.boxZoomLevels;
+const boxWHRatios = randomComic.boxWHRatios;
 const audiosetLabel = 1 + Math.floor(Math.random() * numAudioSets);
 
 let currIndex = 0;
@@ -34,7 +47,7 @@ let singleClickTimeout: NodeJS.Timeout | null = null;
 let fadeStepTimeout: NodeJS.Timeout | null = null;
 let swipeThruStepTimeout: NodeJS.Timeout | null = null;
 let opacity = opacityMin;
-let scale = boxZoomLevels[currIndex] * 1.025;
+let scale = widthToHeightRatioZoomScale(boxWHRatios[currIndex]) * scaleMax;
 let translate = 0;
 let fadeAnimationBusy = false;
 let firstClick = true;
@@ -53,14 +66,16 @@ function showIndex(targetIndex: number): void {
 }
 
 function performFadeOutThenIn(): void {
+  const whRatio = boxWHRatios[currIndex];
+  const zoomScale = widthToHeightRatioZoomScale(whRatio);
   performFadeInOut(
     opacityMax,
     opacityMin,
-    boxZoomLevels[currIndex],
-    boxZoomLevels[currIndex] * 1.025,
-    boxZoomLevels[currIndex] === 1
+    zoomScale,
+    zoomScale * scaleMax,
+    whRatio === 1
       ? 0
-      : windowHeight / boxZoomLevels[currIndex] / 4,
+      : (whRatio > 1 ? windowWidth : windowHeight) / zoomScale / 4,
     0,
     true,
     false,
@@ -68,15 +83,17 @@ function performFadeOutThenIn(): void {
 }
 
 function performFadeIn(firstTime: boolean): void {
+  const whRatio = boxWHRatios[currIndex];
+  const zoomScale = widthToHeightRatioZoomScale(whRatio);
   performFadeInOut(
     opacityMin,
     opacityMax,
-    boxZoomLevels[currIndex] * 1.025,
-    boxZoomLevels[currIndex],
+    zoomScale * scaleMax,
+    zoomScale,
     0,
-    boxZoomLevels[currIndex] === 1
+    whRatio === 1
       ? 0
-      : windowHeight / boxZoomLevels[currIndex] / 4,
+      : (whRatio > 1 ? windowWidth : windowHeight) / zoomScale / 4,
     false,
     firstTime,
   );
@@ -118,7 +135,7 @@ function performFadeInOut(
         return;
       } else {
         if (firstTime) $boxImage?.classList.remove('faded-out');
-        if (boxZoomLevels[currIndex] !== 1) {
+        if (boxWHRatios[currIndex] !== 1) {
           performBoxSwipeThru(translateEnd, -translateEnd);
           return;
         }
