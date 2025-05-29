@@ -2,8 +2,31 @@
 const comicSets = [
   {
     setLabel: 'a',
-    numBoxes: 10,
-    boxWHRatios: [1, 1, 2 / 3, 1, 2, 1, 1, 2 / 3, 1, 1],
+    numBoxes: 23,
+    boxWHRatios: [
+      2,
+      1,
+      1 / 3,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+    ],
   },
   {
     setLabel: 'b',
@@ -11,10 +34,15 @@ const comicSets = [
     boxWHRatios: [1, 2, 2 / 3, 1, 1, 1, 1, 1, 1, 1],
   },
   { setLabel: 'c', numBoxes: 7, boxWHRatios: [2 / 3, 1, 1, 1, 1, 1, 1] },
+  {
+    setLabel: 'd',
+    numBoxes: 10,
+    boxWHRatios: [1, 1, 2 / 3, 1, 2, 1, 1, 2 / 3, 1, 1],
+  },
 ];
 const widthToHeightRatioZoomScale = (whRatio) =>
   Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
-const audioOn = true; // Play background audio (after first click)
+const audioOn = false; // Play background audio (after first click)
 const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
 const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
@@ -27,8 +55,8 @@ const boxSwipeThruSpeed = 1; // Swipe thru box Animation speed
 const singleClickDelay = 250; // Adjust delay to match typical double-click speed
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
-const numComicSets = comicSets.length;
-const randomComic = comicSets[Math.floor(Math.random() * numComicSets)];
+// const numComicSets = comicSets.length;
+const randomComic = comicSets[0]; // Math.floor(Math.random() * numComicSets)];
 const numBoxes = randomComic.numBoxes;
 const imagesetLabel = randomComic.setLabel;
 const boxWHRatios = randomComic.boxWHRatios;
@@ -39,7 +67,10 @@ let singleClickTimeout = null;
 let fadeStepTimeout = null;
 let swipeThruStepTimeout = null;
 let opacity = opacityMin;
-let scale = widthToHeightRatioZoomScale(boxWHRatios[currIndex]) * scaleMax;
+let scale =
+  1 *
+  // widthToHeightRatioZoomScale(boxWHRatios[currIndex])
+  scaleMax;
 let translateX = 0;
 let translateY = 0;
 let fadeAnimationBusy = false;
@@ -56,8 +87,10 @@ function performFadeOutThenIn() {
   performFadeInOut(
     opacityMax,
     opacityMin,
-    zoomScale,
-    zoomScale * scaleMax,
+    // zoomScale,
+    1,
+    // zoomScale * scaleMax,
+    1 * scaleMax,
     whRatio === 1
       ? 0
       : ((whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1)) /
@@ -76,8 +109,10 @@ function performFadeIn(firstTime) {
   performFadeInOut(
     opacityMin,
     opacityMax,
-    zoomScale * scaleMax,
-    zoomScale,
+    // zoomScale * scaleMax,
+    1 * scaleMax,
+    // zoomScale,
+    1,
     0,
     whRatio === 1
       ? 0
