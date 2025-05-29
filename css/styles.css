@@ -26,8 +26,6 @@ body {
 }
 
 .box {
-  height: 100%;
-  max-width: 100%;
   border-style: solid;
   border-width: 10px;
   border-color: white;
@@ -36,13 +34,4 @@ body {
 .box.faded-out {
   opacity: 0;
   transform: scale(1.025) rotate(30deg);
-}
-
-@media screen and (orientation: portrait) {
-  .box {
-    height: unset;
-    max-width: unset;
-    width: 100%;
-    max-height: 100%;
-  }
 }

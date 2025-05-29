@@ -3,78 +3,50 @@ const comicSets = [
   {
     setLabel: 'a',
     numBoxes: 23,
-    boxWHRatios: [
-      2,
-      1,
-      1 / 3,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-    ],
   },
   {
     setLabel: 'b',
     numBoxes: 10,
-    boxWHRatios: [1, 2, 2 / 3, 1, 1, 1, 1, 1, 1, 1],
   },
-  { setLabel: 'c', numBoxes: 7, boxWHRatios: [2 / 3, 1, 1, 1, 1, 1, 1] },
+  { setLabel: 'c', numBoxes: 7 },
   {
     setLabel: 'd',
     numBoxes: 10,
-    boxWHRatios: [1, 1, 2 / 3, 1, 2, 1, 1, 2 / 3, 1, 1],
   },
 ];
-const widthToHeightRatioZoomScale = (whRatio) =>
-  Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
-const audioOn = false; // Play background audio (after first click)
+const audioOn = true; // Play background audio (after first click)
 const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
 const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
+const boxBorderWidth = 10; // border width (px) around boxes
 const numFadeSteps = 25; // Fade animation step count
 const scaleMax = 1.025; // Bit of over-scaling for fade in effect
 const opacityMax = 1;
 const opacityMin = 0;
 const boxFadeDelay = 350; // Fade animation duration
 const boxSwipeThruSpeed = 1; // Swipe thru box Animation speed
+const swipeThruDelay = 300; // Swipe thru start delay
 const singleClickDelay = 250; // Adjust delay to match typical double-click speed
-const windowWidth = window.innerWidth;
-const windowHeight = window.innerHeight;
+// const windowWidth = window.innerWidth;
+// const windowHeight = window.innerHeight;
 // const numComicSets = comicSets.length;
 const randomComic = comicSets[0]; // Math.floor(Math.random() * numComicSets)];
 const numBoxes = randomComic.numBoxes;
 const imagesetLabel = randomComic.setLabel;
-const boxWHRatios = randomComic.boxWHRatios;
 const audiosetLabel = 1 + Math.floor(Math.random() * numAudioSets);
 let currIndex = 0;
 let $boxImage = null;
 let singleClickTimeout = null;
 let fadeStepTimeout = null;
 let swipeThruStepTimeout = null;
+let box;
 let opacity = opacityMin;
-let scale =
-  1 *
-  // widthToHeightRatioZoomScale(boxWHRatios[currIndex])
-  scaleMax;
+let scale = scaleMax;
 let translateX = 0;
 let translateY = 0;
 let fadeAnimationBusy = false;
 let firstClick = true;
+let firstBoxLoaded = false;
 function showIndex(targetIndex) {
   console.log(targetIndex);
   currIndex = targetIndex;
@@ -82,44 +54,28 @@ function showIndex(targetIndex) {
 }
 // Animate prev box fading out then next box into view:
 function performFadeOutThenIn() {
-  const whRatio = boxWHRatios[currIndex];
-  const zoomScale = widthToHeightRatioZoomScale(whRatio);
   performFadeInOut(
     opacityMax,
     opacityMin,
-    // zoomScale,
-    1,
-    // zoomScale * scaleMax,
-    1 * scaleMax,
-    whRatio === 1
-      ? 0
-      : ((whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1)) /
-          zoomScale /
-          2,
+    1 * box.scaleDownBy,
+    scaleMax * box.scaleDownBy,
+    box.translateStart,
     0,
-    whRatio > 1,
+    box.isHoriz,
     true,
     false,
   );
 }
 // Animate box fading in to view:
 function performFadeIn(firstTime) {
-  const whRatio = boxWHRatios[currIndex];
-  const zoomScale = widthToHeightRatioZoomScale(whRatio);
   performFadeInOut(
     opacityMin,
     opacityMax,
-    // zoomScale * scaleMax,
-    1 * scaleMax,
-    // zoomScale,
-    1,
+    scaleMax * box.scaleDownBy,
+    1 * box.scaleDownBy,
     0,
-    whRatio === 1
-      ? 0
-      : ((whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1)) /
-          zoomScale /
-          2,
-    whRatio > 1,
+    box.translateStart,
+    box.isHoriz,
     false,
     firstTime,
   );
@@ -136,6 +92,7 @@ function performFadeInOut(
   isFadeOutThenIn,
   firstTime,
 ) {
+  console.log(translateStart, translateEnd);
   const translateIncr =
     Math.round(((translateEnd - translateStart) / numFadeSteps) * 10) / 10;
   fadeStepTimeout = setInterval(() => {
@@ -161,18 +118,19 @@ function performFadeInOut(
           'src',
           `images/${imagesetLabel}${currIndex + 1}.png`,
         );
-        setTimeout(() => performFadeIn(false), boxFadeDelay);
         return;
       } else {
         if (firstTime) $boxImage?.classList.remove('faded-out');
-        if (boxWHRatios[currIndex] !== 1) {
+        if (box.isWidthOversized || box.isHeightOversized) {
           fadeAnimationBusy = false;
           if (boxSwipeThruOn) {
-            const whRatio = boxWHRatios[currIndex];
-            const zoomScale = widthToHeightRatioZoomScale(whRatio);
-            performBoxSwipeThru(
-              (whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1),
-              translateIsHoriz,
+            setTimeout(
+              () =>
+                performBoxSwipeThru(
+                  box.isHoriz ? box.width : box.height,
+                  box.isHoriz,
+                ),
+              swipeThruDelay,
             );
           }
         }
@@ -183,35 +141,6 @@ function performFadeInOut(
 }
 // Animate scrolling through a box (when zoom scale > 1):
 function performBoxSwipeThru(scrollEnd, scrollIsHoriz) {
-  /*
-    let scroll = scrollStart;
-    window.scrollTo({
-      left: scrollIsHoriz ? scrollStart : 0,
-      top: scrollIsHoriz ? 0 : scrollStart,
-      behavior: 'smooth',
-    });
-    const scrollIncr = Math.round((scrollEnd - scrollStart) / numSwipeThruSteps);
-    swipeThruStepTimeout = setInterval(() => {
-      scroll += scrollIncr;
-      window.scrollTo({
-        left: scrollIsHoriz ? scroll : 0,
-        top: scrollIsHoriz ? 0 : scroll,
-        behavior: 'smooth',
-      });
-      if (scroll >= scrollEnd) {
-        if (swipeThruStepTimeout) {
-          clearInterval(swipeThruStepTimeout);
-          fadeStepTimeout = null;
-        }
-        window.scrollTo({
-          left: scrollIsHoriz ? scrollEnd : 0,
-          top: scrollIsHoriz ? 0 : scrollEnd,
-          behavior: 'smooth',
-        });
-        fadeAnimationBusy = false;
-      }
-    }, boxSwipeThruDelay);
-    */
   // console.log(scrollStart, scrollEnd);
   const targetScroll = scrollEnd; // document.body[scrollIsHoriz ? 'scrollWidth' : 'scrollHeight'];
   // console.log('targetScroll', targetScroll);
@@ -277,9 +206,44 @@ function handleOnLoad() {
   $boxImage.setAttribute('alt', 'box');
   $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex + 1}.png`);
   $boxImage.setAttribute('draggable', 'false');
+  $boxImage.addEventListener('load', () => {
+    const windowW = window.innerWidth;
+    const windowH = window.innerHeight;
+    const w = $boxImage.width + 2 * boxBorderWidth;
+    const h = $boxImage.height + 2 * boxBorderWidth;
+    box = {
+      width: w,
+      height: h,
+      isHoriz: w >= h,
+      isWidthOversized: w > windowW,
+      isHeightOversized: h > windowH,
+      scaleDownBy:
+        w > windowW && h > windowH
+          ? Math.round((w >= h ? windowH / h : windowW / w) * 100) / 100
+          : 1,
+      translateStart: 0,
+    };
+    // Make sure we consider box horizontal if the scrolling will need to be horizontal &&
+    // vertical if the scrolling will need to be vertical:
+    if (box.isWidthOversized && !box.isHeightOversized) box.isHoriz = true;
+    else if (box.isHeightOversized && !box.isWidthOversized)
+      box.isHoriz = false;
+    box.translateStart = box.isHoriz
+      ? box.isWidthOversized
+        ? (box.width - window.innerWidth) / 2
+        : 0
+      : box.isHeightOversized
+        ? (box.height - window.innerHeight) / 2
+        : 0;
+    console.log('box', box);
+    // Fade image in:
+    if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
+    else {
+      firstBoxLoaded = true;
+      performFadeIn(true);
+    }
+  });
   $page?.appendChild($boxImage);
-  // Fade image in:
-  performFadeIn(true);
 }
 // On manual scroll cancel any auto-scroll that might be happening:
 function handleScroll() {
