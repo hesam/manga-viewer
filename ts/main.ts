@@ -26,12 +26,11 @@ const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale 
 const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
 const numFadeSteps = 25; // Fade animation step count
-const numSwipeThruSteps = 100; // Swipe thru box Animation step count
 const scaleMax = 1.025; // Bit of over-scaling for fade in effect
 const opacityMax = 1;
 const opacityMin = 0;
 const boxFadeDelay = 350; // Fade animation duration
-const boxSwipeThruDelay = 50; // Fade animation duration
+const boxSwipeThruSpeed = 1; // Swipe thru box Animation speed
 const singleClickDelay = 250; // Adjust delay to match typical double-click speed
 
 const windowWidth = window.innerWidth;
@@ -58,13 +57,6 @@ let firstClick = true;
 function showIndex(targetIndex: number): void {
   console.log(targetIndex);
   currIndex = targetIndex;
-  /*
-  $boxImage?.classList.add('faded-out');
-  setTimeout(() => {
-    $boxImage!.setAttribute('src', `images/${imagesetLabel}${currIndex}.png`);
-    $boxImage?.classList.remove('faded-out');
-  }, boxFadeDelay);
-  */
   performFadeOutThenIn();
 }
 
@@ -158,7 +150,6 @@ function performFadeInOut(
             const whRatio = boxWHRatios[currIndex];
             const zoomScale = widthToHeightRatioZoomScale(whRatio);
             performBoxSwipeThru(
-              0,
               (whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1),
               translateIsHoriz,
             );
@@ -171,13 +162,9 @@ function performFadeInOut(
 }
 
 // Animate scrolling through a box (when zoom scale > 1):
-function performBoxSwipeThru(
-  scrollStart: number,
-  scrollEnd: number,
-  scrollIsHoriz: boolean,
-): void {
+function performBoxSwipeThru(scrollEnd: number, scrollIsHoriz: boolean): void {
+  /*
   let scroll = scrollStart;
-  console.log('scrollTo');
   window.scrollTo({
     left: scrollIsHoriz ? scrollStart : 0,
     top: scrollIsHoriz ? 0 : scrollStart,
@@ -204,6 +191,25 @@ function performBoxSwipeThru(
       fadeAnimationBusy = false;
     }
   }, boxSwipeThruDelay);
+  */
+  // console.log(scrollStart, scrollEnd);
+  const targetScroll = scrollEnd; // document.body[scrollIsHoriz ? 'scrollWidth' : 'scrollHeight'];
+  // console.log('targetScroll', targetScroll);
+  let prevDistance = 0;
+  function animationStep(): void {
+    const scroll = scrollIsHoriz ? window.scrollX : window.scrollY;
+    // console.log('scroll', scroll, 'target', targetScroll);
+    const distance = targetScroll - scroll;
+    const move = Math.min(boxSwipeThruSpeed, distance);
+    // console.log('distance', distance, 'prevDistance', prevDistance);
+    if (Math.abs(distance - prevDistance) >= 1) {
+      if (scrollIsHoriz) window.scrollBy(move, 0);
+      else window.scrollBy(0, move);
+      prevDistance = distance;
+      requestAnimationFrame(animationStep);
+    }
+  }
+  animationStep();
 }
 
 const getNextIndex = (): number =>
