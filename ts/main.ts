@@ -13,7 +13,7 @@ const comicSets: ComicSet[] = [
   {
     setLabel: 'b',
     numBoxes: 10,
-    boxWHRatios: [1, 2, 1 / 2, 1, 1, 1, 1, 1, 1, 1],
+    boxWHRatios: [1, 2, 2 / 3, 1, 1, 1, 1, 1, 1, 1],
   },
   { setLabel: 'c', numBoxes: 7, boxWHRatios: [2 / 3, 1, 1, 1, 1, 1, 1] },
 ];
@@ -21,8 +21,9 @@ const comicSets: ComicSet[] = [
 const widthToHeightRatioZoomScale = (whRatio: number): number =>
   Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
 
-const audioOn = false; // Play background audio (after first click)
-const boxSwipeThruOn = false; // Animate scrolling through a box when zoom scale > 1
+const audioOn = true; // Play background audio (after first click)
+const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
+const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
 const numFadeSteps = 25; // Fade animation step count
 const numSwipeThruSteps = 100; // Swipe thru box Animation step count
@@ -153,8 +154,15 @@ function performFadeInOut(
         if (firstTime) $boxImage?.classList.remove('faded-out');
         if (boxWHRatios[currIndex] !== 1) {
           fadeAnimationBusy = false;
-          if (boxSwipeThruOn)
-            performBoxSwipeThru(translateEnd, -translateEnd, translateIsHoriz);
+          if (boxSwipeThruOn) {
+            const whRatio = boxWHRatios[currIndex];
+            const zoomScale = widthToHeightRatioZoomScale(whRatio);
+            performBoxSwipeThru(
+              0,
+              (whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1),
+              translateIsHoriz,
+            );
+          }
         }
       }
       fadeAnimationBusy = false;
@@ -164,27 +172,35 @@ function performFadeInOut(
 
 // Animate scrolling through a box (when zoom scale > 1):
 function performBoxSwipeThru(
-  translateStart: number,
-  translateEnd: number,
-  translateIsHoriz: boolean,
+  scrollStart: number,
+  scrollEnd: number,
+  scrollIsHoriz: boolean,
 ): void {
-  const translateIncr = Math.round(
-    (translateEnd - translateStart) / numSwipeThruSteps,
-  );
+  let scroll = scrollStart;
+  console.log('scrollTo');
+  window.scrollTo({
+    left: scrollIsHoriz ? scrollStart : 0,
+    top: scrollIsHoriz ? 0 : scrollStart,
+    behavior: 'smooth',
+  });
+  const scrollIncr = Math.round((scrollEnd - scrollStart) / numSwipeThruSteps);
   swipeThruStepTimeout = setInterval(() => {
-    if (translateIsHoriz) translateX += translateIncr;
-    else translateY += translateIncr;
-    $boxImage!.style.transform = `scale(${scale}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateIsHoriz ? translateX : translateY}px)`;
-    if (
-      Math.abs((translateIsHoriz ? translateX : translateY) - translateEnd) < 1
-    ) {
+    scroll += scrollIncr;
+    window.scrollTo({
+      left: scrollIsHoriz ? scroll : 0,
+      top: scrollIsHoriz ? 0 : scroll,
+      behavior: 'smooth',
+    });
+    if (scroll >= scrollEnd) {
       if (swipeThruStepTimeout) {
         clearInterval(swipeThruStepTimeout);
         fadeStepTimeout = null;
       }
-      $boxImage!.style.transform = `scale(${scale}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateEnd}px)`;
-      if (translateIsHoriz) translateX = translateEnd;
-      else translateY = translateEnd;
+      window.scrollTo({
+        left: scrollIsHoriz ? scrollEnd : 0,
+        top: scrollIsHoriz ? 0 : scrollEnd,
+        behavior: 'smooth',
+      });
       fadeAnimationBusy = false;
     }
   }, boxSwipeThruDelay);
@@ -195,12 +211,16 @@ const getNextIndex = (): number =>
 const getPrevIndex = (): number =>
   currIndex === 0 ? numBoxes - 1 : currIndex - 1;
 
+// On click move to next image:
 function handleClick(): void {
   // Delay the click handler slightly to ignore if it's a double-click:
   // If there's already a timer, let it continue:
   if (fadeAnimationBusy || singleClickTimeout) return;
   // Cancel any box swipe thru that might be happening:
-  if (swipeThruStepTimeout) clearInterval(swipeThruStepTimeout);
+  if (swipeThruStepTimeout) {
+    clearInterval(swipeThruStepTimeout);
+    swipeThruStepTimeout = null;
+  }
   // Select bg audio randomly and play:
   if (firstClick) {
     firstClick = false;
@@ -220,6 +240,7 @@ function handleClick(): void {
   }, singleClickDelay);
 }
 
+// On dbl-click move to prev image:
 function handleDblClick(): void {
   if (fadeAnimationBusy) return;
   fadeAnimationBusy = true;
@@ -228,6 +249,7 @@ function handleDblClick(): void {
   singleClickTimeout = null;
 }
 
+// Fade first image in:
 function handleOnLoad(): void {
   // Create img element for comic:
   $boxImage = document.createElement('img');
@@ -241,11 +263,24 @@ function handleOnLoad(): void {
   performFadeIn(true);
 }
 
+// On manual scroll cancel any auto-scroll that might be happening:
+
+function handleScroll(): void {
+  // Cancel any box swipe thru that might be happening:
+  if (swipeThruStepTimeout) {
+    clearInterval(swipeThruStepTimeout);
+    swipeThruStepTimeout = null;
+  }
+}
+
 const $page = document.querySelector('.page');
 if (!$page) throw new Error('$page is null');
 // On dbl-click move to prev image:
 $page.addEventListener('dblclick', handleDblClick);
 // On click move to next image:
 $page.addEventListener('click', handleClick);
+// On manual scroll cancel any auto-scroll that might be happening:
+if (cancelAutoSwipeOnUserScroll)
+  window.addEventListener('scroll', handleScroll);
 // Fade first image in:
 document.addEventListener('DOMContentLoaded', handleOnLoad);
