@@ -3,17 +3,19 @@ const comicSets = [
   {
     setLabel: 'a',
     numBoxes: 10,
-    boxWHRatios: [1, 1, 1 / 3, 1, 2, 1, 1, 1 / 3, 1, 1],
+    boxWHRatios: [1, 1, 2 / 3, 1, 2, 1, 1, 2 / 3, 1, 1],
   },
   {
     setLabel: 'b',
     numBoxes: 10,
-    boxWHRatios: [1, 4, 10 / 35, 1, 1, 1, 1, 1, 1, 1],
+    boxWHRatios: [1, 2, 1 / 2, 1, 1, 1, 1, 1, 1, 1],
   },
   { setLabel: 'c', numBoxes: 7, boxWHRatios: [2 / 3, 1, 1, 1, 1, 1, 1] },
 ];
 const widthToHeightRatioZoomScale = (whRatio) =>
   Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
+const audioOn = false; // Play background audio (after first click)
+const boxSwipeThruOn = false; // Animate scrolling through a box when zoom scale > 1
 const numAudioSets = 2; // Number of background audio files
 const numFadeSteps = 25; // Fade animation step count
 const numSwipeThruSteps = 100; // Swipe thru box Animation step count
@@ -22,7 +24,7 @@ const opacityMax = 1;
 const opacityMin = 0;
 const boxFadeDelay = 350; // Fade animation duration
 const boxSwipeThruDelay = 50; // Fade animation duration
-const singleClickDelay = 250; // adjust delay to match typical double-click speed:
+const singleClickDelay = 250; // Adjust delay to match typical double-click speed
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
 const numComicSets = comicSets.length;
@@ -38,7 +40,8 @@ let fadeStepTimeout = null;
 let swipeThruStepTimeout = null;
 let opacity = opacityMin;
 let scale = widthToHeightRatioZoomScale(boxWHRatios[currIndex]) * scaleMax;
-let translate = 0;
+let translateX = 0;
+let translateY = 0;
 let fadeAnimationBusy = false;
 let firstClick = true;
 function showIndex(targetIndex) {
@@ -53,6 +56,7 @@ function showIndex(targetIndex) {
     */
   performFadeOutThenIn();
 }
+// Animate prev box fading out then next box into view:
 function performFadeOutThenIn() {
   const whRatio = boxWHRatios[currIndex];
   const zoomScale = widthToHeightRatioZoomScale(whRatio);
@@ -63,12 +67,16 @@ function performFadeOutThenIn() {
     zoomScale * scaleMax,
     whRatio === 1
       ? 0
-      : (whRatio > 1 ? windowWidth : windowHeight) / zoomScale / 4,
+      : ((whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1)) /
+          zoomScale /
+          2,
     0,
+    whRatio > 1,
     true,
     false,
   );
 }
+// Animate box fading in to view:
 function performFadeIn(firstTime) {
   const whRatio = boxWHRatios[currIndex];
   const zoomScale = widthToHeightRatioZoomScale(whRatio);
@@ -80,11 +88,15 @@ function performFadeIn(firstTime) {
     0,
     whRatio === 1
       ? 0
-      : (whRatio > 1 ? windowWidth : windowHeight) / zoomScale / 4,
+      : ((whRatio > 1 ? windowWidth : windowHeight) * (zoomScale - 1)) /
+          zoomScale /
+          2,
+    whRatio > 1,
     false,
     firstTime,
   );
 }
+// Helper to animate box fade out/in:
 function performFadeInOut(
   opacityStart,
   opacityEnd,
@@ -92,26 +104,30 @@ function performFadeInOut(
   scaleEnd,
   translateStart,
   translateEnd,
+  translateIsHoriz,
   isFadeOutThenIn,
   firstTime,
 ) {
+  const translateIncr =
+    Math.round(((translateEnd - translateStart) / numFadeSteps) * 10) / 10;
   fadeStepTimeout = setInterval(() => {
     opacity +=
       Math.round(((opacityEnd - opacityStart) / numFadeSteps) * 100) / 100;
     scale += Math.round(((scaleEnd - scaleStart) / numFadeSteps) * 1000) / 1000;
-    translate +=
-      Math.round(((translateEnd - translateStart) / numFadeSteps) * 10) / 10;
+    if (translateIsHoriz) translateX += translateIncr;
+    else translateY += translateIncr;
     $boxImage.style.opacity = String(opacity);
-    $boxImage.style.transform = `scale(${scale}) translateY(${translate}px)`;
+    $boxImage.style.transform = `scale(${scale}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateIsHoriz ? translateX : translateY}px)`;
     if (Math.abs(opacity - opacityEnd) < 0.01) {
       if (fadeStepTimeout) {
         clearInterval(fadeStepTimeout);
         fadeStepTimeout = null;
       }
       $boxImage.style.opacity = String(opacityEnd);
-      $boxImage.style.transform = `scale(${scaleEnd}) translateY(${translateEnd}px)`;
+      $boxImage.style.transform = `scale(${scaleEnd}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateEnd}px)`;
       scale = scaleEnd;
-      translate = translateEnd;
+      if (translateIsHoriz) translateX = translateEnd;
+      else translateY = translateEnd;
       if (isFadeOutThenIn) {
         $boxImage.setAttribute(
           'src',
@@ -122,27 +138,34 @@ function performFadeInOut(
       } else {
         if (firstTime) $boxImage?.classList.remove('faded-out');
         if (boxWHRatios[currIndex] !== 1) {
-          performBoxSwipeThru(translateEnd, -translateEnd);
-          return;
+          fadeAnimationBusy = false;
+          if (boxSwipeThruOn)
+            performBoxSwipeThru(translateEnd, -translateEnd, translateIsHoriz);
         }
       }
       fadeAnimationBusy = false;
     }
   }, boxFadeDelay / numFadeSteps);
 }
-function performBoxSwipeThru(translateStart, translateEnd) {
+// Animate scrolling through a box (when zoom scale > 1):
+function performBoxSwipeThru(translateStart, translateEnd, translateIsHoriz) {
+  const translateIncr = Math.round(
+    (translateEnd - translateStart) / numSwipeThruSteps,
+  );
   swipeThruStepTimeout = setInterval(() => {
-    translate += Math.round(
-      (translateEnd - translateStart) / numSwipeThruSteps,
-    );
-    $boxImage.style.transform = `scale(${scale}) translateY(${translate}px)`;
-    if (Math.abs(translate - translateEnd) < 10) {
+    if (translateIsHoriz) translateX += translateIncr;
+    else translateY += translateIncr;
+    $boxImage.style.transform = `scale(${scale}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateIsHoriz ? translateX : translateY}px)`;
+    if (
+      Math.abs((translateIsHoriz ? translateX : translateY) - translateEnd) < 1
+    ) {
       if (swipeThruStepTimeout) {
         clearInterval(swipeThruStepTimeout);
         fadeStepTimeout = null;
       }
-      $boxImage.style.transform = `scale(${scale}) translateY(${translateEnd}px)`;
-      translate = translateEnd;
+      $boxImage.style.transform = `scale(${scale}) translate${translateIsHoriz ? 'X' : 'Y'}(${translateEnd}px)`;
+      if (translateIsHoriz) translateX = translateEnd;
+      else translateY = translateEnd;
       fadeAnimationBusy = false;
     }
   }, boxSwipeThruDelay);
@@ -158,11 +181,13 @@ function handleClick() {
   // Select bg audio randomly and play:
   if (firstClick) {
     firstClick = false;
-    const $bgAudio = document.querySelector('#bg-audio');
-    if ($bgAudio) {
-      $bgAudio.setAttribute('src', `audio/${audiosetLabel}.mp3`);
-      $bgAudio.loop = true;
-      $bgAudio.play();
+    if (audioOn) {
+      const $bgAudio = document.querySelector('#bg-audio');
+      if ($bgAudio) {
+        $bgAudio.setAttribute('src', `audio/${audiosetLabel}.mp3`);
+        $bgAudio.loop = true;
+        $bgAudio.play();
+      }
     }
   }
   singleClickTimeout = setTimeout(() => {
