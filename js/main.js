@@ -14,7 +14,7 @@ const comicSets = [
 ];
 const widthToHeightRatioZoomScale = (whRatio) =>
   Math.round((whRatio >= 1 ? whRatio : 1 / whRatio) * 1000) / 1000;
-const audioOn = false; // Play background audio (after first click)
+const audioOn = true; // Play background audio (after first click)
 const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
 const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
