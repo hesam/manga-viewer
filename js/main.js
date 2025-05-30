@@ -1,5 +1,5 @@
 'use strict';
-const audioOn = false; // Play background audio (after first click)
+const audioOn = true; // Play background audio (after first click)
 const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
 const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
 const numAudioSets = 2; // Number of background audio files
@@ -45,7 +45,6 @@ let translateY = 0;
 let fadeAnimationBusy = false;
 let firstClick = true;
 let firstBoxLoaded = false;
-// let justDoneResizing = false;
 function showIndex(targetIndex) {
   console.log(targetIndex);
   currIndex = targetIndex;
@@ -56,8 +55,8 @@ function performFadeOutThenIn() {
   performFadeInOut(
     opacityMax,
     opacityMin,
-    box.scaleDownBy,
-    scaleMax * box.scaleDownBy,
+    1,
+    scaleMax,
     box.translateStart,
     0,
     box.isHoriz,
@@ -70,8 +69,8 @@ function performFadeIn(firstTime) {
   performFadeInOut(
     opacityMin,
     opacityMax,
-    scaleMax * box.scaleDownBy,
-    box.scaleDownBy,
+    scaleMax,
+    1,
     0,
     box.translateStart,
     box.isHoriz,
@@ -115,12 +114,8 @@ function performFadeInOut(
       if (translateIsHoriz) translateX = translateEnd;
       else translateY = translateEnd;
       if (isFadeOutThenIn) {
-        // Changing the src attribute will cause the image 'load' event to refire once the new image is loaded:
-        // justDoneResizing = false;
-        $boxImage.setAttribute(
-          'src',
-          `images/${imagesetLabel}${currIndex + 1}.png`,
-        );
+        // Create a new image for the next box, which will also cause the image 'load' event to refire once the new image is loaded:
+        createBoxImage();
         return;
       } else {
         if (firstTime) $boxImage?.classList.remove('faded-out');
@@ -141,16 +136,12 @@ function performFadeInOut(
 }
 // Animate scrolling through a box (when zoom scale > 1):
 function performBoxSwipeThru(scrollEnd, scrollIsHoriz) {
-  // console.log('scrollEnd', scrollEnd);
-  const targetScroll = scrollEnd; // document.body[scrollIsHoriz ? 'scrollWidth' : 'scrollHeight'];
-  // console.log('targetScroll', targetScroll);
   let prevDistance = 0;
   swipeThruToBeHalted = false;
   function animationStep() {
     if (swipeThruToBeHalted) return;
     const scroll = scrollIsHoriz ? window.scrollX : window.scrollY;
-    // console.log('scroll', scroll, 'target', targetScroll);
-    const distance = targetScroll - scroll;
+    const distance = scrollEnd - scroll;
     const move = Math.min(boxSwipeThruSpeed, distance);
     // console.log('distance', distance, 'prevDistance', prevDistance);
     if (Math.abs(distance - prevDistance) >= 1) {
@@ -197,69 +188,69 @@ function handleDblClick() {
   showIndex(getPrevIndex());
   singleClickTimeout = null;
 }
+// Once a box image is loaded in the document, record image dimensions, etc.:
+function handleBoxImageLoaded() {
+  const windowW = window.innerWidth;
+  const windowH = window.innerHeight;
+  const ow = $boxImage.width;
+  const oh = $boxImage.height;
+  const w = ow + 2 * boxBorderWidth;
+  const h = oh + 2 * boxBorderWidth;
+  box = {
+    width: w,
+    height: h,
+    isHoriz: w >= h,
+    isWidthOversized: false,
+    isHeightOversized: false,
+    scaleDownBy:
+      w > windowW && h > windowH
+        ? Math.round((ow >= oh ? windowH / oh : windowW / ow) * 1000000) /
+          1000000
+        : 1,
+    translateStart: 0,
+  };
+  box.isWidthOversized = Math.round(w * box.scaleDownBy) > windowW;
+  box.isHeightOversized = Math.round(h * box.scaleDownBy) > windowH;
+  // Make sure we consider box horizontal if the scrolling will need to be horizontal &&
+  // vertical if the scrolling will need to be vertical:
+  if (box.isWidthOversized && !box.isHeightOversized) box.isHoriz = true;
+  else if (box.isHeightOversized && !box.isWidthOversized) box.isHoriz = false;
+  box.translateStart = box.isHoriz
+    ? box.isWidthOversized
+      ? (box.width * box.scaleDownBy - window.innerWidth) / 2
+      : 0
+    : 0;
+  // Scale the actual box image dimensions to fit one (shorter) site in screen:
+  if (box.scaleDownBy < 1) {
+    $boxImage.width = ow * box.scaleDownBy;
+    $boxImage.height = oh * box.scaleDownBy;
+  }
+  console.log('box', box);
+  // Fade image in:
+  if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
+  else {
+    firstBoxLoaded = true;
+    performFadeIn(true);
+  }
+}
+// Creates an image element for the upcoming box and adds to DOM:
+function createBoxImage() {
+  // Remove any previous box image first:
+  if ($boxImage) $boxImage.remove();
+  // Create a new one:
+  $boxImage = document.createElement('img');
+  $boxImage.className = 'box faded-out';
+  $boxImage.setAttribute('alt', 'box');
+  $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex + 1}.png`);
+  $boxImage.setAttribute('draggable', 'false');
+  $boxImage.addEventListener('load', handleBoxImageLoaded);
+  $page?.appendChild($boxImage);
+}
 // Fade first image in:
 function handleOnLoad() {
   window.scrollTo(0, 0);
   // Create img element for comic:
-  $boxImage = document.createElement('img');
-  $boxImage.className = 'box faded-out';
-  $boxImage.setAttribute('alt', 'box');
-  // justDoneResizing = false;
-  $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex + 1}.png`);
-  $boxImage.setAttribute('draggable', 'false');
-  $boxImage.addEventListener('load', () => {
-    // if (justDoneResizing) return;
-    const windowW = window.innerWidth;
-    const windowH = window.innerHeight;
-    const ow = $boxImage.width;
-    const oh = $boxImage.height;
-    const w = ow + 2 * boxBorderWidth;
-    const h = oh + 2 * boxBorderWidth;
-    box = {
-      width: w,
-      height: h,
-      isHoriz: w >= h,
-      isWidthOversized: false,
-      isHeightOversized: false,
-      scaleDownBy:
-        w > windowW && h > windowH
-          ? Math.round((w >= h ? windowH / h : windowW / w) * 1000) / 1000
-          : 1,
-      translateStart: 0,
-    };
-    box.isWidthOversized = Math.round(w * box.scaleDownBy) > windowW;
-    box.isHeightOversized = Math.round(h * box.scaleDownBy) > windowH;
-    // Make sure we consider box horizontal if the scrolling will need to be horizontal &&
-    // vertical if the scrolling will need to be vertical:
-    if (box.isWidthOversized && !box.isHeightOversized) box.isHoriz = true;
-    else if (box.isHeightOversized && !box.isWidthOversized)
-      box.isHoriz = false;
-    box.translateStart = box.isHoriz
-      ? box.isWidthOversized
-        ? (box.width * box.scaleDownBy - window.innerWidth) / 2
-        : 0
-      : 0;
-    // justDoneResizing = true;
-    if (box.scaleDownBy < 1) {
-      if (w >= h) {
-        box.translateStart = (windowH - h) / 2 - boxBorderWidth;
-        box.isHoriz = false;
-      }
-      // $boxImage!.width = ow * box.scaleDownBy;
-      // $boxImage!.height = oh * box.scaleDownBy;
-    } /* else {
-          $boxImage!.width = ow;
-          $boxImage!.height = oh;
-        } */
-    console.log('box', box);
-    // Fade image in:
-    if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
-    else {
-      firstBoxLoaded = true;
-      performFadeIn(true);
-    }
-  });
-  $page?.appendChild($boxImage);
+  createBoxImage();
 }
 // On manual scroll cancel any auto-scroll that might be happening:
 function handleScroll() {
