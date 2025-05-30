@@ -14,6 +14,8 @@ const singleClickDelay = 250; // Adjust delay to match typical double-click spee
 
 // A list of comic boxes (panels) that make up the comic:
 interface ComicSet {
+  title: string; // Comic title
+  titleImageIndex: number; // Which box image file shown on title page
   setLabel: string; // Image file names prefix
   numBoxes: number; // Num boxes (images) to scroll thru
 }
@@ -31,25 +33,30 @@ interface Box {
 
 const comicSets: ComicSet[] = [
   {
+    title: 'Krazy Kat',
+    titleImageIndex: 12,
     setLabel: 'a',
     numBoxes: 23,
   },
   {
+    title: 'B',
+    titleImageIndex: 0,
     setLabel: 'b',
     numBoxes: 10,
   },
-  { setLabel: 'c', numBoxes: 7 },
+  { title: 'Krazy Kat', titleImageIndex: 0, setLabel: 'c', numBoxes: 7 },
   {
+    title: 'D',
+    titleImageIndex: 0,
     setLabel: 'd',
     numBoxes: 10,
   },
 ];
 
-// const numComicSets = comicSets.length;
-const randomComic = comicSets[0]; // Math.floor(Math.random() * numComicSets)];
-const numBoxes = randomComic.numBoxes;
-const imagesetLabel = randomComic.setLabel;
-const audiosetLabel = 1 + Math.floor(Math.random() * numAudioSets);
+let randomComic: ComicSet;
+let numBoxes: number;
+let imagesetLabel: string;
+let audiosetLabel: number;
 
 let currIndex = 0;
 let $boxImage: HTMLImageElement | null = null;
@@ -62,8 +69,6 @@ let scale = scaleMax;
 let translateX = 0;
 let translateY = 0;
 let fadeAnimationBusy = false;
-let firstClick = true;
-let firstBoxLoaded = false;
 
 function showIndex(targetIndex: number): void {
   console.log(targetIndex);
@@ -82,12 +87,11 @@ function performFadeOutThenIn(): void {
     0,
     box.isHoriz,
     true,
-    false,
   );
 }
 
 // Animate box fading in to view:
-function performFadeIn(firstTime: boolean): void {
+function performFadeIn(): void {
   performFadeInOut(
     opacityMin,
     opacityMax,
@@ -97,7 +101,6 @@ function performFadeIn(firstTime: boolean): void {
     box.translateStart,
     box.isHoriz,
     false,
-    firstTime,
   );
 }
 
@@ -111,7 +114,6 @@ function performFadeInOut(
   translateEnd: number,
   translateIsHoriz: boolean,
   isFadeOutThenIn: boolean,
-  firstTime: boolean,
 ): void {
   // Reset the scroll for next box:
   if (!isFadeOutThenIn) window.scrollTo({ left: 0, top: 0 });
@@ -142,7 +144,7 @@ function performFadeInOut(
         createBoxImage();
         return;
       } else {
-        if (firstTime) $boxImage?.classList.remove('faded-out');
+        $boxImage?.classList.remove('faded-out');
         if (box.isWidthOversized || box.isHeightOversized) {
           if (boxSwipeThruOn) {
             setTimeout(() => {
@@ -191,18 +193,6 @@ function handleClick(): void {
   if (fadeAnimationBusy || singleClickTimeout) return;
   // Cancel any box swipe thru that might be happening:
   swipeThruToBeHalted = true;
-  // Select bg audio randomly and play:
-  if (firstClick) {
-    firstClick = false;
-    if (audioOn) {
-      const $bgAudio = document.querySelector('#bg-audio') as HTMLAudioElement;
-      if ($bgAudio) {
-        $bgAudio.setAttribute('src', `audio/${audiosetLabel}.mp3`);
-        $bgAudio.loop = true;
-        $bgAudio.play();
-      }
-    }
-  }
   singleClickTimeout = setTimeout(() => {
     fadeAnimationBusy = true;
     showIndex(getNextIndex());
@@ -257,12 +247,7 @@ function handleBoxImageLoaded(): void {
     $boxImage!.height = oh * box.scaleDownBy;
   }
   console.log('box', box);
-  // Fade image in:
-  if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
-  else {
-    firstBoxLoaded = true;
-    performFadeIn(true);
-  }
+  performFadeIn();
 }
 
 // Creates an image element for the upcoming box and adds to DOM:
@@ -279,28 +264,86 @@ function createBoxImage(): void {
   $page?.appendChild($boxImage);
 }
 
-// Fade first image in:
 function handleOnLoad(): void {
   window.scrollTo(0, 0);
-  // Create img element for comic:
-  createBoxImage();
+  comicSets.forEach((comic: ComicSet, idx: number): void => {
+    // Create a gallery item for the comic:
+    const $galleryItem = document.createElement('div') as HTMLDivElement;
+    $galleryItem.className = 'gallery-item box';
+    $galleryItem.setAttribute('data-comic-id', String(idx));
+    $galleryItem.style.transform = `rotate(${Math.floor(Math.random() * 10) - 5}deg)`;
+    const $galleryItemImage = document.createElement('img') as HTMLImageElement;
+    $galleryItemImage.className = 'gallery-item-img';
+    $galleryItemImage.setAttribute('alt', 'gallery-item-' + comic.title);
+    $galleryItemImage.setAttribute(
+      'src',
+      `images/${comic.setLabel}${comic.titleImageIndex + 1}.png`,
+    );
+    $galleryItemImage!.setAttribute('draggable', 'false');
+    $galleryItem.appendChild($galleryItemImage);
+    $galleryItems!.appendChild($galleryItem);
+  });
 }
 
 // On manual scroll cancel any auto-scroll that might be happening:
-
 function handleScroll(): void {
   // Cancel any box swipe thru that might be happening:
   swipeThruToBeHalted = true;
 }
 
+// Handle picking a comic: Fade first image in...
+function handleGalleryPick(e: Event): void {
+  let $clickedElement = e.target as HTMLElement;
+  // Reject if clicked outside a comic area:
+  if (
+    !(
+      $clickedElement.tagName === 'IMG' ||
+      $clickedElement.classList.contains('gallery-item')
+    )
+  )
+    return;
+  // Find the outer container element for the comic in the gallery
+  if ($clickedElement.tagName === 'IMG')
+    $clickedElement = $clickedElement.closest('.gallery-item')!;
+  window.scrollTo(0, 0);
+  // Record the index of comic picked:
+  const comicId = +$clickedElement.dataset.comicId!;
+  // Record data associated with the picked comic:
+  randomComic = comicSets[comicId]; // Math.floor(Math.random() * numComicSets)];
+  numBoxes = randomComic.numBoxes;
+  imagesetLabel = randomComic.setLabel;
+  audiosetLabel = 1 + Math.floor(Math.random() * numAudioSets);
+
+  // Create img element for comic:
+  createBoxImage();
+
+  $gallery!.classList.add('hidden');
+  $page!.classList.remove('hidden');
+  // On dbl-click move to prev image:
+  $page!.addEventListener('dblclick', handleDblClick);
+  // On click move to next image:
+  $page!.addEventListener('click', handleClick);
+  // On manual scroll cancel any auto-scroll that might be happening:
+  if (cancelAutoSwipeOnUserScroll)
+    window.addEventListener('scroll', handleScroll);
+  // Select bg audio randomly and play:
+  if (audioOn) {
+    const $bgAudio = document.querySelector('#bg-audio') as HTMLAudioElement;
+    if ($bgAudio) {
+      $bgAudio.setAttribute('src', `audio/${audiosetLabel}.mp3`);
+      $bgAudio.loop = true;
+      $bgAudio.play();
+    }
+  }
+}
+const $gallery = document.querySelector('.gallery');
+const $galleryItems = document.querySelector('.gallery-items');
 const $page = document.querySelector('.page');
-if (!$page) throw new Error('$page is null');
-// On dbl-click move to prev image:
-$page.addEventListener('dblclick', handleDblClick);
-// On click move to next image:
-$page.addEventListener('click', handleClick);
-// On manual scroll cancel any auto-scroll that might be happening:
-if (cancelAutoSwipeOnUserScroll)
-  window.addEventListener('scroll', handleScroll);
-// Fade first image in:
+if (!($page || $gallery || $galleryItems))
+  throw new Error('Problem loading page!');
+
+// On click to pick a comic:
+$galleryItems!.addEventListener('click', handleGalleryPick);
+
+// Dynamically load to comics gallery to pick from:
 document.addEventListener('DOMContentLoaded', handleOnLoad);

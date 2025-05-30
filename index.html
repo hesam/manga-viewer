@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MangaVera -- A prototype manga/comics viewer</title>
     <link rel="icon" href="images/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300&display=swap"
+      rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
     <audio id="bg-audio" src="" autoplay loop></audio>
-    <div class="page"></div>
+    <div class="gallery">
+      <h1>Pick a Comic</h1>
+      <div class="gallery-items"></div>
+    </div>
+    <div class="page hidden"></div>
     <script src="js/main.js"></script>
   </body>
 </html>

@@ -10,10 +10,38 @@ html {
 body {
   height: 100%;
   margin: 0;
-  color: black;
+  color: white;
   background-color: black;
-  font-family: 'Open Sans', sans-serif;
   user-select: none;
+  font-family: 'Comic Neue', cursive;
+  font-style: normal;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+.gallery {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.gallery-items {
+  display: flex;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+
+.gallery-item {
+  width: 50%;
+  height: 100%;
+}
+
+.gallery-item-img {
+  width: 100%;
 }
 
 .page {
@@ -33,5 +61,9 @@ body {
 
 .box.faded-out {
   opacity: 0;
-  transform: scale(1.025) rotate(30deg);
+  transform: scale(1.025);
+}
+
+.hidden {
+  display: none;
 }
