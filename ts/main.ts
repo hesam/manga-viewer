@@ -41,12 +41,10 @@ const scaleMax = 1.025; // Bit of over-scaling for fade in effect
 const opacityMax = 1;
 const opacityMin = 0;
 const boxFadeDelay = 350; // Fade animation duration
-const boxSwipeThruSpeed = 1; // Swipe thru box Animation speed
+const boxSwipeThruSpeed = 1.5; // Swipe thru box Animation speed
 const swipeThruDelay = 300; // Swipe thru start delay
 const singleClickDelay = 250; // Adjust delay to match typical double-click speed
 
-// const windowWidth = window.innerWidth;
-// const windowHeight = window.innerHeight;
 // const numComicSets = comicSets.length;
 const randomComic = comicSets[0]; // Math.floor(Math.random() * numComicSets)];
 const numBoxes = randomComic.numBoxes;
@@ -57,7 +55,7 @@ let currIndex = 0;
 let $boxImage: HTMLImageElement | null = null;
 let singleClickTimeout: NodeJS.Timeout | null = null;
 let fadeStepTimeout: NodeJS.Timeout | null = null;
-let swipeThruStepTimeout: NodeJS.Timeout | null = null;
+let swipeThruToBeHalted = true;
 let box: Box;
 let opacity = opacityMin;
 let scale = scaleMax;
@@ -115,7 +113,8 @@ function performFadeInOut(
   isFadeOutThenIn: boolean,
   firstTime: boolean,
 ): void {
-  console.log(translateStart, translateEnd);
+  // if (isFadeOutThenIn) window.scrollTo({ left: 0, top: 0 });
+  // console.log(translateStart, translateEnd);
   const translateIncr =
     Math.round(((translateEnd - translateStart) / numFadeSteps) * 10) / 10;
   fadeStepTimeout = setInterval(() => {
@@ -138,6 +137,7 @@ function performFadeInOut(
       if (translateIsHoriz) translateX = translateEnd;
       else translateY = translateEnd;
       if (isFadeOutThenIn) {
+        // Changing the src attribute will cause the image 'load' event to refire once the new image is loaded:
         $boxImage!.setAttribute(
           'src',
           `images/${imagesetLabel}${currIndex + 1}.png`,
@@ -166,11 +166,13 @@ function performFadeInOut(
 
 // Animate scrolling through a box (when zoom scale > 1):
 function performBoxSwipeThru(scrollEnd: number, scrollIsHoriz: boolean): void {
-  // console.log(scrollStart, scrollEnd);
+  // console.log('scrollEnd', scrollEnd);
   const targetScroll = scrollEnd; // document.body[scrollIsHoriz ? 'scrollWidth' : 'scrollHeight'];
   // console.log('targetScroll', targetScroll);
   let prevDistance = 0;
+  swipeThruToBeHalted = false;
   function animationStep(): void {
+    if (swipeThruToBeHalted) return;
     const scroll = scrollIsHoriz ? window.scrollX : window.scrollY;
     // console.log('scroll', scroll, 'target', targetScroll);
     const distance = targetScroll - scroll;
@@ -197,10 +199,7 @@ function handleClick(): void {
   // If there's already a timer, let it continue:
   if (fadeAnimationBusy || singleClickTimeout) return;
   // Cancel any box swipe thru that might be happening:
-  if (swipeThruStepTimeout) {
-    clearInterval(swipeThruStepTimeout);
-    swipeThruStepTimeout = null;
-  }
+  swipeThruToBeHalted = true;
   // Select bg audio randomly and play:
   if (firstClick) {
     firstClick = false;
@@ -231,6 +230,7 @@ function handleDblClick(): void {
 
 // Fade first image in:
 function handleOnLoad(): void {
+  window.scrollTo(0, 0);
   // Create img element for comic:
   $boxImage = document.createElement('img') as HTMLImageElement;
   $boxImage.className = 'box faded-out';
@@ -263,9 +263,9 @@ function handleOnLoad(): void {
       ? box.isWidthOversized
         ? (box.width - window.innerWidth) / 2
         : 0
-      : box.isHeightOversized
+      : 0; /* box.isHeightOversized
         ? (box.height - window.innerHeight) / 2
-        : 0;
+        : 0; */
     console.log('box', box);
     // Fade image in:
     if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
@@ -281,10 +281,7 @@ function handleOnLoad(): void {
 
 function handleScroll(): void {
   // Cancel any box swipe thru that might be happening:
-  if (swipeThruStepTimeout) {
-    clearInterval(swipeThruStepTimeout);
-    swipeThruStepTimeout = null;
-  }
+  swipeThruToBeHalted = true;
 }
 
 const $page = document.querySelector('.page');
