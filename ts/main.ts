@@ -1,3 +1,17 @@
+const audioOn = true; // Play background audio (after first click)
+const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
+const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
+const numAudioSets = 2; // Number of background audio files
+const boxBorderWidth = 10; // border width (px) around boxes
+const numFadeSteps = 25; // Fade animation step count
+const scaleMax = 1.025; // Bit of over-scaling for fade in effect
+const opacityMax = 1;
+const opacityMin = 0;
+const boxFadeDelay = 350; // Fade animation duration
+const boxSwipeThruSpeed = 1.5; // Swipe thru box Animation speed
+const swipeThruDelay = 300; // Swipe thru start delay
+const singleClickDelay = 250; // Adjust delay to match typical double-click speed
+
 // A list of comic boxes (panels) that make up the comic:
 interface ComicSet {
   setLabel: string; // Image file names prefix
@@ -31,20 +45,6 @@ const comicSets: ComicSet[] = [
   },
 ];
 
-const audioOn = true; // Play background audio (after first click)
-const boxSwipeThruOn = true; // Animate scrolling through a box when zoom scale > 1
-const cancelAutoSwipeOnUserScroll = false; // On manual scroll, cancel any auto-scroll that might be happening
-const numAudioSets = 2; // Number of background audio files
-const boxBorderWidth = 10; // border width (px) around boxes
-const numFadeSteps = 25; // Fade animation step count
-const scaleMax = 1.025; // Bit of over-scaling for fade in effect
-const opacityMax = 1;
-const opacityMin = 0;
-const boxFadeDelay = 350; // Fade animation duration
-const boxSwipeThruSpeed = 1.5; // Swipe thru box Animation speed
-const swipeThruDelay = 300; // Swipe thru start delay
-const singleClickDelay = 250; // Adjust delay to match typical double-click speed
-
 // const numComicSets = comicSets.length;
 const randomComic = comicSets[0]; // Math.floor(Math.random() * numComicSets)];
 const numBoxes = randomComic.numBoxes;
@@ -64,6 +64,7 @@ let translateY = 0;
 let fadeAnimationBusy = false;
 let firstClick = true;
 let firstBoxLoaded = false;
+// let justDoneResizing = false;
 
 function showIndex(targetIndex: number): void {
   console.log(targetIndex);
@@ -76,7 +77,7 @@ function performFadeOutThenIn(): void {
   performFadeInOut(
     opacityMax,
     opacityMin,
-    1 * box.scaleDownBy,
+    box.scaleDownBy,
     scaleMax * box.scaleDownBy,
     box.translateStart,
     0,
@@ -92,7 +93,7 @@ function performFadeIn(firstTime: boolean): void {
     opacityMin,
     opacityMax,
     scaleMax * box.scaleDownBy,
-    1 * box.scaleDownBy,
+    box.scaleDownBy,
     0,
     box.translateStart,
     box.isHoriz,
@@ -113,7 +114,8 @@ function performFadeInOut(
   isFadeOutThenIn: boolean,
   firstTime: boolean,
 ): void {
-  // if (isFadeOutThenIn) window.scrollTo({ left: 0, top: 0 });
+  // Reset the scroll for next box:
+  if (!isFadeOutThenIn) window.scrollTo({ left: 0, top: 0 });
   // console.log(translateStart, translateEnd);
   const translateIncr =
     Math.round(((translateEnd - translateStart) / numFadeSteps) * 10) / 10;
@@ -138,6 +140,8 @@ function performFadeInOut(
       else translateY = translateEnd;
       if (isFadeOutThenIn) {
         // Changing the src attribute will cause the image 'load' event to refire once the new image is loaded:
+        // justDoneResizing = false;
+
         $boxImage!.setAttribute(
           'src',
           `images/${imagesetLabel}${currIndex + 1}.png`,
@@ -232,25 +236,31 @@ function handleOnLoad(): void {
   $boxImage = document.createElement('img') as HTMLImageElement;
   $boxImage.className = 'box faded-out';
   $boxImage.setAttribute('alt', 'box');
+  // justDoneResizing = false;
   $boxImage.setAttribute('src', `images/${imagesetLabel}${currIndex + 1}.png`);
   $boxImage!.setAttribute('draggable', 'false');
   $boxImage!.addEventListener('load', () => {
+    // if (justDoneResizing) return;
     const windowW = window.innerWidth;
     const windowH = window.innerHeight;
-    const w = $boxImage!.width + 2 * boxBorderWidth;
-    const h = $boxImage!.height + 2 * boxBorderWidth;
+    const ow = $boxImage!.width;
+    const oh = $boxImage!.height;
+    const w = ow + 2 * boxBorderWidth;
+    const h = oh + 2 * boxBorderWidth;
     box = {
       width: w,
       height: h,
       isHoriz: w >= h,
-      isWidthOversized: w > windowW,
-      isHeightOversized: h > windowH,
+      isWidthOversized: false,
+      isHeightOversized: false,
       scaleDownBy:
         w > windowW && h > windowH
-          ? Math.round((w >= h ? windowH / h : windowW / w) * 100) / 100
+          ? Math.round((w >= h ? windowH / h : windowW / w) * 1000) / 1000
           : 1,
       translateStart: 0,
     };
+    box.isWidthOversized = Math.round(w * box.scaleDownBy) > windowW;
+    box.isHeightOversized = Math.round(h * box.scaleDownBy) > windowH;
     // Make sure we consider box horizontal if the scrolling will need to be horizontal &&
     // vertical if the scrolling will need to be vertical:
     if (box.isWidthOversized && !box.isHeightOversized) box.isHoriz = true;
@@ -258,11 +268,22 @@ function handleOnLoad(): void {
       box.isHoriz = false;
     box.translateStart = box.isHoriz
       ? box.isWidthOversized
-        ? (box.width - window.innerWidth) / 2
+        ? (box.width * box.scaleDownBy - window.innerWidth) / 2
         : 0
-      : 0; /* box.isHeightOversized
-        ? (box.height - window.innerHeight) / 2
-        : 0; */
+      : 0;
+    // justDoneResizing = true;
+    if (box.scaleDownBy < 1) {
+      if (w >= h) {
+        box.translateStart = (windowH - h) / 2 - boxBorderWidth;
+        box.isHoriz = false;
+      }
+      // $boxImage!.width = ow * box.scaleDownBy;
+      // $boxImage!.height = oh * box.scaleDownBy;
+    } /* else {
+      $boxImage!.width = ow;
+      $boxImage!.height = oh;
+    } */
+
     console.log('box', box);
     // Fade image in:
     if (firstBoxLoaded) setTimeout(() => performFadeIn(false), boxFadeDelay);
