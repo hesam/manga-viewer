@@ -146,16 +146,13 @@ function performFadeInOut(
       } else {
         if (firstTime) $boxImage?.classList.remove('faded-out');
         if (box.isWidthOversized || box.isHeightOversized) {
-          fadeAnimationBusy = false;
           if (boxSwipeThruOn) {
-            setTimeout(
-              () =>
-                performBoxSwipeThru(
-                  box.isHoriz ? box.width : box.height,
-                  box.isHoriz,
-                ),
-              swipeThruDelay,
-            );
+            setTimeout(() => {
+              performBoxSwipeThru(
+                box.isHoriz ? box.width : box.height,
+                box.isHoriz,
+              );
+            }, swipeThruDelay);
           }
         }
       }
