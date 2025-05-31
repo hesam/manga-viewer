@@ -1,6 +1,6 @@
 # mangavera
 
-MangaVera -- A prototype manga/comics viewer
+MangaVera -- A prototype manga/comics viewer implemented in vanilla TypeScript/JavaScript 
 
 ![Logo](https://hesam.github.io/mangavera/images/favicon.png)
 
