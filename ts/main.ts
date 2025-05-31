@@ -71,7 +71,7 @@ let translateY = 0;
 let fadeAnimationBusy = false;
 
 function showIndex(targetIndex: number): void {
-  console.log(targetIndex);
+  // console.log(targetIndex);
   currIndex = targetIndex;
   performFadeOutThenIn();
 }
@@ -246,7 +246,7 @@ function handleBoxImageLoaded(): void {
     $boxImage!.width = ow * box.scaleDownBy;
     $boxImage!.height = oh * box.scaleDownBy;
   }
-  console.log('box', box);
+  // console.log('box', box);
   performFadeIn();
 }
 
