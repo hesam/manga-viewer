@@ -339,11 +339,15 @@ function handleGalleryPick(e: Event): void {
 const $gallery = document.querySelector('.gallery');
 const $galleryItems = document.querySelector('.gallery-items');
 const $page = document.querySelector('.page');
-if (!($page || $gallery || $galleryItems))
+const $nav = document.querySelector('.nav');
+if (!($page || $gallery || $galleryItems || $nav))
   throw new Error('Problem loading page!');
 
 // On click to pick a comic:
 $galleryItems!.addEventListener('click', handleGalleryPick);
+
+// On click move to next image:
+$nav!.addEventListener('click', () => window.location.reload());
 
 // Dynamically load to comics gallery to pick from:
 document.addEventListener('DOMContentLoaded', handleOnLoad);

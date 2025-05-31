@@ -2,7 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
     <title>MangaVera -- A prototype manga/comics viewer</title>
     <link rel="icon" href="images/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,10 +17,12 @@
   <body>
     <audio id="bg-audio" src="" autoplay loop></audio>
     <div class="gallery">
-      <h1>Pick a Comic</h1>
+      <h1>Pick Comic</h1>
       <div class="gallery-items"></div>
     </div>
-    <div class="page hidden"></div>
+    <div class="page hidden">
+      <div class="nav">←</div>
+    </div>
     <script src="js/main.js"></script>
   </body>
 </html>
