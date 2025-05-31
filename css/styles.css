@@ -62,12 +62,22 @@ h1 {
 }
 
 .gallery-item {
+  position: relative;
   width: 50%;
   height: 100%;
 }
 
 .gallery-item-img {
   width: 100%;
+}
+
+.gallery-item-title {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  background-color: rgba(128, 128, 128, 0.75);
+  padding: 5px;
+  font-size: 1.75rem;
 }
 
 .nav {

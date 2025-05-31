@@ -44,7 +44,7 @@ const comicSets: ComicSet[] = [
     setLabel: 'b',
     numBoxes: 10,
   },
-  { title: 'Krazy Kat', titleImageIndex: 0, setLabel: 'c', numBoxes: 7 },
+  { title: 'C', titleImageIndex: 0, setLabel: 'c', numBoxes: 7 },
   {
     title: 'D',
     titleImageIndex: 0,
@@ -280,7 +280,11 @@ function handleOnLoad(): void {
       `images/${comic.setLabel}${comic.titleImageIndex + 1}.png`,
     );
     $galleryItemImage!.setAttribute('draggable', 'false');
+    const $galleryItemTitle = document.createElement('h2') as HTMLElement;
+    $galleryItemTitle.className = 'gallery-item-title';
+    $galleryItemTitle.textContent = comic.title;
     $galleryItem.appendChild($galleryItemImage);
+    $galleryItem.appendChild($galleryItemTitle);
     $galleryItems!.appendChild($galleryItem);
   });
 }
