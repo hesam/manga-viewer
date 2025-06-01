@@ -244,7 +244,7 @@ function handleOnLoad() {
     $galleryItem.setAttribute('data-comic-id', String(idx));
     $galleryItem.style.transform = `rotate(${Math.floor(Math.random() * 10) - 5}deg)`;
     const $galleryItemImage = document.createElement('img');
-    $galleryItemImage.className = 'gallery-item-img';
+    $galleryItemImage.className = 'gallery-item-img gallery-item-element';
     $galleryItemImage.setAttribute('alt', 'gallery-item-' + comic.title);
     $galleryItemImage.setAttribute(
       'src',
@@ -252,7 +252,7 @@ function handleOnLoad() {
     );
     $galleryItemImage.setAttribute('draggable', 'false');
     const $galleryItemTitle = document.createElement('h2');
-    $galleryItemTitle.className = 'gallery-item-title';
+    $galleryItemTitle.className = 'gallery-item-title gallery-item-element';
     $galleryItemTitle.textContent = comic.title;
     $galleryItem.appendChild($galleryItemImage);
     $galleryItem.appendChild($galleryItemTitle);
@@ -273,13 +273,13 @@ function handleGalleryPick(e) {
   // Reject if clicked outside a comic area:
   if (
     !(
-      $clickedElement.tagName === 'IMG' ||
+      $clickedElement.classList.contains('gallery-item-element') ||
       $clickedElement.classList.contains('gallery-item')
     )
   )
     return;
   // Find the outer container element for the comic in the gallery
-  if ($clickedElement.tagName === 'IMG')
+  if ($clickedElement.classList.contains('gallery-item-element'))
     $clickedElement = $clickedElement.closest('.gallery-item');
   window.scrollTo(0, 0);
   // Record the index of comic picked:
