@@ -54,6 +54,7 @@ const comicSets: ComicSet[] = [
 ];
 
 let randomComic: ComicSet;
+const numComics = comicSets.length;
 let numBoxes: number;
 let imagesetLabel: string;
 let audiosetLabel: number;
@@ -264,6 +265,10 @@ function createBoxImage(): void {
   $page?.appendChild($boxImage);
 }
 
+function handleGalleryImagesLoaded(): void {
+  $gallery?.classList.remove('hidden');
+}
+
 function handleOnLoad(): void {
   window.scrollTo(0, 0);
   comicSets.forEach((comic: ComicSet, idx: number): void => {
@@ -286,6 +291,9 @@ function handleOnLoad(): void {
     $galleryItem.appendChild($galleryItemImage);
     $galleryItem.appendChild($galleryItemTitle);
     $galleryItems!.appendChild($galleryItem);
+    // After last image is loaded, fade in the gallery:
+    if (idx === numComics - 1)
+      $galleryItemImage.addEventListener('load', handleGalleryImagesLoaded);
   });
 }
 

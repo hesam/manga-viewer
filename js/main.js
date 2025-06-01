@@ -34,6 +34,7 @@ const comicSets = [
   },
 ];
 let randomComic;
+const numComics = comicSets.length;
 let numBoxes;
 let imagesetLabel;
 let audiosetLabel;
@@ -229,6 +230,9 @@ function createBoxImage() {
   $boxImage.addEventListener('load', handleBoxImageLoaded);
   $page?.appendChild($boxImage);
 }
+function handleGalleryImagesLoaded() {
+  $gallery?.classList.remove('hidden');
+}
 function handleOnLoad() {
   window.scrollTo(0, 0);
   comicSets.forEach((comic, idx) => {
@@ -251,6 +255,9 @@ function handleOnLoad() {
     $galleryItem.appendChild($galleryItemImage);
     $galleryItem.appendChild($galleryItemTitle);
     $galleryItems.appendChild($galleryItem);
+    // After last image is loaded, fade in the gallery:
+    if (idx === numComics - 1)
+      $galleryItemImage.addEventListener('load', handleGalleryImagesLoaded);
   });
 }
 // On manual scroll cancel any auto-scroll that might be happening:
