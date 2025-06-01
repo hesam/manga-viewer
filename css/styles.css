@@ -41,7 +41,8 @@ h1 {
   align-items: center;
 }
 
-.gallery > h1 {
+.gallery-title {
+  margin-bottom: 75px;
   transform: skew(28deg, 357deg);
   text-shadow: 2px 2px rgba(246, 255, 0, 0.175);
 }
@@ -95,6 +96,7 @@ h1 {
   align-items: center;
   font-size: 3rem;
   z-index: 2;
+  cursor: pointer;
 }
 
 .page {
@@ -104,6 +106,16 @@ h1 {
   justify-content: center;
   align-items: center;
   cursor: pointer;
+}
+
+.about {
+  padding: 100px;
+  text-align: center;
+  font-size: larger;
+}
+
+.about img {
+  width: 10vw;
 }
 
 .hidden {
@@ -118,6 +130,10 @@ h1 {
   animation-duration: 1s;
 }
 
+a {
+  color: yellowgreen;
+}
+
 @keyframes fadeInOpacity {
   0% {
     opacity: 0;
@@ -125,5 +141,13 @@ h1 {
 
   100% {
     opacity: 1;
+  }
+}
+
+/* Portrait */
+@media only screen and (width <= 1280px) and (orientation: portrait) {
+  .gallery-title {
+    margin-bottom: 50px;
+    margin-top: 75px;
   }
 }

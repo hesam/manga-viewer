@@ -310,15 +310,36 @@ function handleGalleryPick(e) {
     }
   }
 }
+function handleAboutPage() {
+  $gallery?.classList.add('hidden');
+  $about?.classList.remove('hidden');
+}
+const $about = document.querySelector('.about');
 const $gallery = document.querySelector('.gallery');
 const $galleryItems = document.querySelector('.gallery-items');
 const $page = document.querySelector('.page');
-const $nav = document.querySelector('.nav');
-if (!($page || $gallery || $galleryItems || $nav))
+const $navAbout = document.querySelector('#nav-about');
+const $aboutNavBack = document.querySelector('#about-nav-back');
+const $navBack = document.querySelector('#page-nav-back');
+if (
+  !(
+    $page ||
+    $gallery ||
+    $about ||
+    $galleryItems ||
+    $navAbout ||
+    $navBack ||
+    $aboutNavBack
+  )
+)
   throw new Error('Problem loading page!');
 // On click to pick a comic:
 $galleryItems.addEventListener('click', handleGalleryPick);
-// On click move to next image:
-$nav.addEventListener('click', () => window.location.reload());
+// On click back return to gallery page:
+[$navBack, $aboutNavBack].forEach((e) =>
+  e.addEventListener('click', () => window.location.reload()),
+);
+// On click visiting the about page:
+$navAbout.addEventListener('click', handleAboutPage);
 // Dynamically load to comics gallery to pick from:
 document.addEventListener('DOMContentLoaded', handleOnLoad);

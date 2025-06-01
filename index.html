@@ -22,12 +22,49 @@
   </head>
   <body>
     <audio id="bg-audio" src="" autoplay loop></audio>
+    <div class="about hidden">
+      <div id="about-nav-back" class="nav">
+        <i class="fa-solid fa-circle-chevron-left"></i>
+      </div>
+      <h2 class="gallery-title">MangaVera</h2>
+      <p>MangaVera is an experimental prototype manga/comic viewer.</p>
+      <h2 class="gallery-title">About Creators</h2>
+      <div>
+        <div>
+          <a href="https://www.linkedin.com/company/semi-games/" target="_blank"
+            ><img
+              class="header-logo"
+              src="https://hesam.us/cs/semigames/semi-games-tr-logo.png"
+          /></a>
+        </div>
+        <p>
+          MangaVera is an
+          <a href="https://github.com/hesam/mangavera" target="_blank"
+            >open-source</a
+          >
+          vanilla TypeScript/JavaScript website designed &amp; developed by:<br /><a
+            href="https://hesam.us"
+            target="_blank"
+            >Hesam (Sam) Samimi</a
+          >
+          at
+          <a href="https://www.linkedin.com/company/semi-games/" target="_blank"
+            >Semi Games</a
+          >
+        </p>
+      </div>
+    </div>
     <div class="gallery fade-in hidden">
-      <h1>Choose your comic</h1>
+      <div id="nav-about" class="nav">
+        <i class="fa-solid fa-circle-info"></i>
+      </div>
+      <h1 class="gallery-title">Choose your comic</h1>
       <div class="gallery-items"></div>
     </div>
     <div class="page hidden">
-      <div class="nav"><i class="fa-solid fa-circle-chevron-left"></i></div>
+      <div id="page-nav-back" class="nav">
+        <i class="fa-solid fa-circle-chevron-left"></i>
+      </div>
     </div>
     <script src="js/main.js"></script>
   </body>
