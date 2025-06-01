@@ -265,10 +265,12 @@ function createBoxImage(): void {
   $page?.appendChild($boxImage);
 }
 
+// After last gallery comic image is loaded, we call this to fade in the gallery into view:
 function handleGalleryImagesLoaded(): void {
   $gallery?.classList.remove('hidden');
 }
 
+// Load images to show in the comic gallery:
 function handleOnLoad(): void {
   window.scrollTo(0, 0);
   comicSets.forEach((comic: ComicSet, idx: number): void => {
