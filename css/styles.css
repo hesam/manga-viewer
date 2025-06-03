@@ -118,6 +118,11 @@ h1 {
   width: 150px;
 }
 
+.about ul li {
+  list-style-type: none;
+  color: plum;
+}
+
 .hidden {
   display: none;
 }
