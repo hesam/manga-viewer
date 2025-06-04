@@ -114,8 +114,13 @@ h1 {
   font-size: larger;
 }
 
-.about img {
+.about h2 {
+  margin-bottom: 35px;
+}
+
+.header-logo {
   width: 150px;
+  border-radius: 50%;
 }
 
 .about ul li {
